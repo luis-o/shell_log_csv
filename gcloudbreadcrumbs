@@ -1,0 +1,7 @@
+#!/bin/bash
+
+
+
+gcloud config set project swordhealth-production-$1
+gcloud logging read --format=json 'logName=projects/swordhealth-production-'$1'/logs/mobile_log AND labels.tag="FirebaseEvents" AND textPayload=~"breadcrumb_name='$3'" AND textPayload=~"tab_model='$2'" AND timestamp>="2022-03-01T00:00:00Z"' > out.json
+

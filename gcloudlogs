@@ -1,0 +1,11 @@
+#!/bin/bash
+
+gcloud config set project swordhealth-production-$1
+
+FILTER='projects/swordhealth-production-'$1'/logs/mobile_log labels.serial="'$2'" AND timestamp>="2022-04-01T00:00:00Z"'
+CHIEF=$(date +%Y-%m-%dT%H:%M:%S.000Z)
+MESSAGE="${FILTER} AND timestamp<=\"$CHIEF\""
+
+echo "query: $MESSAGE"
+gcloud logging read --format=json "${MESSAGE}" > out.json
+
