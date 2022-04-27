@@ -1,20 +1,27 @@
 #!/bin/bash
 
-#FORMAT=json
-#FORMAT="csv[separator=', '](timestamp,textPayload)"
-
 usage() {
-  echo "Usage: $0 [ -e ENV ] && [ -s SERIAL ] || [-p PATIENT_ID]" 1>&2; exit 1;
+  echo "Usage: $0 [ -j ] For JSON output"
+  echo "Usage: $0 [ -c ] For CSV output"
+  echo "Usage: $@ [ -e ENV ]"
+  echo "Usage: $@ [ -s SERIAL ]" 
+  echo "Usage: $@ [ -p PATIENT_ID ]"
+  echo "Usage: $0 [ --time1 <initial timestamp> --time2 <final timestamp> ]"
+
+  1>&2; exit 1;
 }
 
 exit_abnormal() {
   exit 1
 }
 
-while getopts "cje:s:p:t:-:" options; do
+while getopts "hcje:s:p:t:-:" options; do
 
 	case "${options}" in
 
+	h)
+		usage
+		;;
 	c)
 		FORMAT="csv[separator=', '](timestamp,textPayload)"
 		;;
@@ -34,26 +41,16 @@ while getopts "cje:s:p:t:-:" options; do
                 time1)
 			val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
 			DATE1=${val}
-			DATE1=${OPTARG}
 			;;
                 time2)
-			val=${OPTARG#*=}
-			opt=${OPTARG%=$val}
+			val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
 			DATE2=${val}
-			echo $DATE2
-			exit
 			;;
                 *)
-			if [ "$OPTERR" = 1 ] && [ "${optspec:0:1}" != ":" ]; then
-				echo "Unknown option --${OPTARG}" >&2
-			fi
 			;;
         esac
         ;;
 
-#	t)
-#		DATE2=${OPTARG}
-#		;;
 	s)
 		SERIAL=${OPTARG}
 		FILTER='projects/swordhealth-production-'$ENV'/logs/mobile_log labels.serial="'$SERIAL'" AND timestamp>="'$DATE1'T00:00:00Z"'
@@ -71,7 +68,7 @@ while getopts "cje:s:p:t:-:" options; do
 
 	p)
 		PATIENT=${OPTARG}
-		FILTER='projects/swordhealth-production-'$ENV'/logs/mobile_log labels.patient_id="'$PATIENT'" AND timestamp>="2022-04-01T00:00:00Z"'
+		FILTER='projects/swordhealth-production-'$ENV'/logs/mobile_log labels.patient_id="'$PATIENT'" AND timestamp>="'$DATE1'T00:00:00Z"'
 		if ! [ -n "$DATE2" ]; then
 			DATE2=$(date +%Y-%m-%dT%H:%M:%S.000Z)
 		fi
@@ -92,7 +89,5 @@ while getopts "cje:s:p:t:-:" options; do
 		;;
 	esac
 done
-
-
 
 exit 0
