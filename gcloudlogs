@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#FORMAT=json
+#FORMAT="csv[separator=', '](timestamp,textPayload)"
+
 usage() {
   echo "Usage: $0 [ -e ENV ] && [ -s SERIAL ] || [-p PATIENT_ID]" 1>&2; exit 1;
 }
@@ -8,9 +11,16 @@ exit_abnormal() {
   exit 1
 }
 
-while getopts "e:s:p:t:" options; do
+while getopts "cje:s:p:t:-:" options; do
 
 	case "${options}" in
+
+	c)
+		FORMAT="csv[separator=', '](timestamp,textPayload)"
+		;;
+	j)
+		FORMAT=json
+		;;
 	e)
 		ENV=${OPTARG}
 		gcloud config set project swordhealth-production-$ENV
@@ -18,7 +28,30 @@ while getopts "e:s:p:t:" options; do
 	t)
 		DATE1=${OPTARG}
 		;;
-#	f)
+	-)
+
+	case "${OPTARG}" in
+                time1)
+			val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+			DATE1=${val}
+			DATE1=${OPTARG}
+			;;
+                time2)
+			val=${OPTARG#*=}
+			opt=${OPTARG%=$val}
+			DATE2=${val}
+			echo $DATE2
+			exit
+			;;
+                *)
+			if [ "$OPTERR" = 1 ] && [ "${optspec:0:1}" != ":" ]; then
+				echo "Unknown option --${OPTARG}" >&2
+			fi
+			;;
+        esac
+        ;;
+
+#	t)
 #		DATE2=${OPTARG}
 #		;;
 	s)
@@ -29,7 +62,11 @@ while getopts "e:s:p:t:" options; do
 		fi
 		MESSAGE="${FILTER} AND timestamp<=\"$DATE2\""
 		echo "query: $MESSAGE"
-		gcloud logging read --format=json "${MESSAGE}" > $ENV-$SERIAL.json
+		if [ $FORMAT == "json" ]; then
+			gcloud logging read --format=$FORMAT "${MESSAGE}" > $ENV-$SERIAL.json
+		else
+			gcloud logging read --format="${FORMAT}" "${MESSAGE}" > $ENV-$SERIAL.csv
+		fi
 		;;
 
 	p)
@@ -40,7 +77,11 @@ while getopts "e:s:p:t:" options; do
 		fi
 		MESSAGE="${FILTER} AND timestamp<=\"$DATE2\""
 		echo "query: $MESSAGE"
-		gcloud logging read --format=json "${MESSAGE}" > $ENV-$PATIENT.json
+		if [[ $FORMAT == "json" ]]; then
+			gcloud logging read --format=$FORMAT "${MESSAGE}" > $ENV-$PATIENT.json
+		else
+			gcloud logging read --format="${FORMAT}" "${MESSAGE}" > $ENV-$PATIENT.csv
+		fi
 		;;
 	:)
 		echo "Error: -${OPTARG} requires an argument."
