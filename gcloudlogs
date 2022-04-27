@@ -1,11 +1,57 @@
 #!/bin/bash
 
-gcloud config set project swordhealth-production-$1
+usage() {
+  echo "Usage: $0 [ -e ENV ] && [ -s SERIAL ] || [-p PATIENT_ID]" 1>&2; exit 1;
+}
 
-FILTER='projects/swordhealth-production-'$1'/logs/mobile_log labels.serial="'$2'" AND timestamp>="2022-04-01T00:00:00Z"'
-CHIEF=$(date +%Y-%m-%dT%H:%M:%S.000Z)
-MESSAGE="${FILTER} AND timestamp<=\"$CHIEF\""
+exit_abnormal() {
+  exit 1
+}
 
-echo "query: $MESSAGE"
-gcloud logging read --format=json "${MESSAGE}" > out.json
+while getopts "e:s:p:t:" options; do
 
+	case "${options}" in
+	e)
+		ENV=${OPTARG}
+		gcloud config set project swordhealth-production-$ENV
+		;;
+	t)
+		DATE1=${OPTARG}
+		;;
+#	f)
+#		DATE2=${OPTARG}
+#		;;
+	s)
+		SERIAL=${OPTARG}
+		FILTER='projects/swordhealth-production-'$ENV'/logs/mobile_log labels.serial="'$SERIAL'" AND timestamp>="'$DATE1'T00:00:00Z"'
+		if ! [ -n "$DATE2" ]; then
+			DATE2=$(date +%Y-%m-%dT%H:%M:%S.000Z)
+		fi
+		MESSAGE="${FILTER} AND timestamp<=\"$DATE2\""
+		echo "query: $MESSAGE"
+		gcloud logging read --format=json "${MESSAGE}" > $ENV-$SERIAL.json
+		;;
+
+	p)
+		PATIENT=${OPTARG}
+		FILTER='projects/swordhealth-production-'$ENV'/logs/mobile_log labels.patient_id="'$PATIENT'" AND timestamp>="2022-04-01T00:00:00Z"'
+		if ! [ -n "$DATE2" ]; then
+			DATE2=$(date +%Y-%m-%dT%H:%M:%S.000Z)
+		fi
+		MESSAGE="${FILTER} AND timestamp<=\"$DATE2\""
+		echo "query: $MESSAGE"
+		gcloud logging read --format=json "${MESSAGE}" > $ENV-$PATIENT.json
+		;;
+	:)
+		echo "Error: -${OPTARG} requires an argument."
+		usage
+		;;
+	*)
+		usage
+		;;
+	esac
+done
+
+
+
+exit 0
