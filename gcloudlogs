@@ -1,13 +1,14 @@
 #!/bin/bash
 
 usage() {
-  echo "Usage: $0 [ -j ] For JSON output"
-  echo "Usage: $0 [ -c ] For CSV output"
-  echo "Usage: $@ [ -e ENV ]"
-  echo "Usage: $@ [ -s SERIAL ]" 
-  echo "Usage: $@ [ -p PATIENT_ID ]"
-  echo "Usage: $0 [ --time1 <initial timestamp> --time2 <final timestamp> ]"
-
+  echo "Usage: [ -j ] For JSON output"
+  echo "Usage: [ -c ] For CSV output"
+  echo "Usage: [ -e ENV ]"
+  echo "Usage: [ -s SERIAL ]" 
+  echo "Usage: [ -p PATIENT_ID ]"
+  echo "Usage: [ -t from timestamp YYYY-MM-DD until NOW>"
+  echo "Usage: [ --time1 <initial timestamp YYYY-MM-DD> --time2 <final timestamp YYYY-MM-DD> ]"
+  echo "Example: $0 -j -t YYY-MM-DD -e ENV -p PATIENT_ID "
   1>&2; exit 1;
 }
 
@@ -33,7 +34,7 @@ while getopts "hcje:s:p:t:-:" options; do
 		gcloud config set project swordhealth-production-$ENV
 		;;
 	t)
-		DATE1=${OPTARG}
+		DATE1=${OPTARG}	
 		;;
 	-)
 
