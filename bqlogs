@@ -3,5 +3,10 @@
 
 gcloud config set project swordhealth-production-us
 
-bq --location=us --project_id=swordhealth-production query --use_legacy_sql=false 'SELECT event_tag, event_type FROM `swordhealth-production.production_system_event_logs.event_logs` WHERE DATE(timestamp) = "2022-06-14" AND device_serial_number = "SW0220211002010613" ORDER BY timestamp DESC LIMIT 1000'
+#bq --location=us --project_id=swordhealth-production query --use_legacy_sql=false 'SELECT timestamp, event_tag, event_type FROM `swordhealth-production.production_system_event_logs.event_logs` WHERE DATE(timestamp) > "2022-06-1" AND device_serial_number = "SW0220211002010613" ORDER BY timestamp DESC LIMIT 1000'
 
+
+QUERY='SELECT timestamp, event_tag, value FROM `swordhealth-production.production_system_event_logs.event_logs` WHERE DATE(timestamp) > "'$1'" AND device_serial_number = "'$2'" ORDER BY timestamp DESC LIMIT 10000'
+
+
+bq --location=us --project_id=swordhealth-production query --use_legacy_sql=false $QUERY
